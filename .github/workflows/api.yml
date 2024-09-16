@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: docker.io # 修改为Docker Hub的默认注册表
-  IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+  IMAGE_NAME: w1770946466/campus-imaotai
   IMAGE_SUBNAME: api
   WORKING_DIR: campus-modular
 
