@@ -1,9 +1,14 @@
 name: api
 
 on:
+  # 手动构建
   workflow_dispatch:
+  push:
+    branches: [ "master", "dev" ]
+    tags: [ 'v*', 'V*' ]
 
 env:
+  REGISTRY: docker.io # 修改为Docker Hub的默认注册表
   IMAGE_NAME: ${{ github.repository }}
   IMAGE_SUBNAME: api
   WORKING_DIR: campus-modular
@@ -33,18 +38,18 @@ jobs:
         run: mvn -B package -P prod --file pom.xml
 
       - name: Login to Docker Hub
-        #if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          registry: ${{ env.REGISTRY }} # 使用Docker Hub的注册表
+          username: ${{ secrets.DOCKER_HUB_USERNAME }} # 使用Docker Hub的用户名
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} # 使用Docker Hub的访问令牌
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}-${{ env.IMAGE_SUBNAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ env.IMAGE_SUBNAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -61,7 +66,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ env.WORKING_DIR }}
-          #push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
